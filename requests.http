@@ -3,9 +3,9 @@ POST http://localhost:3000/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "sample@gmail.com",
+  "email": "nachi@gmail.com",
   "password": "Password1!",
-  "name": "Dee Mid"
+  "name": "Nachi"
 }
 
 ### Login
@@ -13,16 +13,16 @@ POST http://localhost:3000/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "sample@gmail.com",
+  "email": "nachi@gmail.com",
   "password": "Password1!"
 }
 
 ### Get All Users
 GET http://localhost:3000/v1/users
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTU2ODksImV4cCI6MTY3ODc1NzQ4OSwidHlwZSI6ImFjY2VzcyJ9.XZkiSlewh3A2ETgQ9H0uli9SjR06VFk_i0tbyr1RVdk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTYxODUsImV4cCI6MTY3ODc1Nzk4NSwidHlwZSI6ImFjY2VzcyJ9.gDCx9mMEFqbkepI7H0VLYOOWx2pRlr-NfuOD6C1WmBw
 
 ### Get Current User Data
 GET http://localhost:3000/v1/auth/me
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTU2ODksImV4cCI6MTY3ODc1NzQ4OSwidHlwZSI6ImFjY2VzcyJ9.XZkiSlewh3A2ETgQ9H0uli9SjR06VFk_i0tbyr1RVdk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTYxODUsImV4cCI6MTY3ODc1Nzk4NSwidHlwZSI6ImFjY2VzcyJ9.gDCx9mMEFqbkepI7H0VLYOOWx2pRlr-NfuOD6C1WmBw
