@@ -3,7 +3,7 @@ POST http://localhost:3000/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "nachi@gmail.com",
+  "email": "abc@gmail.com",
   "password": "Password1!",
   "name": "Nachi"
 }
@@ -26,3 +26,28 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyY
 GET http://localhost:3000/v1/auth/me
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTYxODUsImV4cCI6MTY3ODc1Nzk4NSwidHlwZSI6ImFjY2VzcyJ9.gDCx9mMEFqbkepI7H0VLYOOWx2pRlr-NfuOD6C1WmBw
+
+### Create a Post
+POST http://localhost:3000/v1/posts
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
+
+{
+  "caption": "hello world",
+  "images": ["test.js"]
+}
+
+### Update a Post
+PATCH http://localhost:3000/v1/posts/641b9b31ef69120885adc9c4
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
+
+{
+  "caption": "hello world updaD",
+  "images": ["test.js"]
+}
+
+
+### GET a Post
+GET http://localhost:3000/v1/posts/641b9b31ef69120885adc9c4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
