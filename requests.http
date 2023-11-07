@@ -3,9 +3,9 @@ POST http://localhost:3000/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "abc@gmail.com",
+  "email": "test@gmail.com",
   "password": "Password1!",
-  "name": "Nachi"
+  "name": "Dee Mid"
 }
 
 ### Login
@@ -13,41 +13,122 @@ POST http://localhost:3000/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "nachi@gmail.com",
+  "email": "test@gmail.com",
   "password": "Password1!"
 }
 
 ### Get All Users
 GET http://localhost:3000/v1/users
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTYxODUsImV4cCI6MTY3ODc1Nzk4NSwidHlwZSI6ImFjY2VzcyJ9.gDCx9mMEFqbkepI7H0VLYOOWx2pRlr-NfuOD6C1WmBw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
 
 ### Get Current User Data
 GET http://localhost:3000/v1/auth/me
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYTkyYzBjYzcyMTIzZDllNWYyNTUiLCJpYXQiOjE2Nzg3NTYxODUsImV4cCI6MTY3ODc1Nzk4NSwidHlwZSI6ImFjY2VzcyJ9.gDCx9mMEFqbkepI7H0VLYOOWx2pRlr-NfuOD6C1WmBw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
 
-### Create a Post
-POST http://localhost:3000/v1/posts
+### Get Dividers
+GET http://localhost:3000/v1/dividers
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+### Get Divider by id
+GET http://localhost:3000/v1/dividers/6546cee77562caa6b35df5a9
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+### Create a Divider
+POST http://localhost:3000/v1/dividers
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
 
 {
-  "caption": "hello world",
-  "images": ["test.js"]
+  "name": "Development"
 }
 
-### Update a Post
-PATCH http://localhost:3000/v1/posts/641b9b31ef69120885adc9c4
+### Get Subjects
+GET http://localhost:3000/v1/subjects
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+### Create a Subject
+POST http://localhost:3000/v1/subjects
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
 
 {
-  "caption": "hello world updaD",
-  "images": ["test.js"]
+  "divider": "654831a876286e1720a96387",
+  "name": "Sample",
+  "colorHex": "ff0000"
 }
 
+### Create a PDF Note
+POST http://localhost:3000/v1/notes/pdf
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
 
-### GET a Post
-GET http://localhost:3000/v1/posts/641b9b31ef69120885adc9c4
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDBmYzg4ZmViZDU0MTQxOTA0N2ZhMWMiLCJpYXQiOjE2Nzk1MzA0NTgsImV4cCI6MTY3OTUzMjI1OCwidHlwZSI6ImFjY2VzcyJ9.E5Egye4FCrxIrcWEzQficcM2xgaXl31ETf_noH05GGE
+{
+  "title": "Flame of Recca",
+  "url": "https://devx-images.s3.ap-southeast-1.amazonaws.com/flame.pdf",
+  "subject": "654832a576286e1720a96396"
+}
+
+### Get Notes
+GET http://localhost:3000/v1/notes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+### Create a Text Note
+POST http://localhost:3000/v1/notes/text
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+{
+  "transcription": "I am the main character of my story. I am Sedrick Reyes! I am 24 years old",
+  "title": "Dan Sedrick",
+  "subject": "654832a576286e1720a96396"
+}
+
+### Create a Video Note
+POST http://localhost:3000/v1/notes/video
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+{
+  "title": "Joseph Prince",
+  "url": "https://devx-images.s3.ap-southeast-1.amazonaws.com/Joseph+Prince+-+The+Lord+makes+your+brokenness+beautiful.mp4",
+  "subject": "654832a576286e1720a96396"
+}
+
+### Create a URL Note
+POST http://localhost:3000/v1/notes/url
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+{
+  "title": "final fantasy",
+  "url": "https://en.wikipedia.org/wiki/Final_Fantasy",
+  "subject": "654832a576286e1720a96396"
+}
+
+### Create a Youtube Note
+POST http://localhost:3000/v1/notes/youtube
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+{
+  "title": "Youtube",
+  "url": "https://www.youtube.com/watch?v=zUhs-MWoTbg",
+  "subject": "654832a576286e1720a96396"
+}
+
+### QUERY A note
+POST http://localhost:3000/v1/notes/query
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTQ4MzEzYzc2Mjg2ZTE3MjBhOTYzNzkiLCJpYXQiOjE2OTkyMzAwMTYsImV4cCI6MTcwMTAzMDAxNiwidHlwZSI6ImFjY2VzcyJ9.xGoJOqpwVNxNEJPFOtS5ykziYleh1QTcioZv4AnhIQI
+
+{
+  "id": "654833ed8e981e18813d07cf",
+  "query": "what is the latest in the series?"
+}
+
