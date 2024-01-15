@@ -1,5 +1,6 @@
 const express = require('express');
 const authRoute = require('./auth.route');
+const avatarRoute = require('./avatar.route');
 const userRoute = require('./user.route');
 const postRoute = require('./post.route');
 const docsRoute = require('./docs.route');
@@ -8,6 +9,7 @@ const uploadRoute = require('./upload.route');
 const dividerRoute = require('./divider.route');
 const subjectRoute = require('./subject.route');
 const noteRoute = require('./note.route');
+const messageRoute = require('./message.route');
 const config = require('../../config/config');
 
 const router = express.Router();
@@ -16,6 +18,10 @@ const defaultRoutes = [
   {
     path: '/auth',
     route: authRoute,
+  },
+  {
+    path: '/avatars',
+    route: avatarRoute,
   },
   {
     path: '/users',
@@ -40,6 +46,10 @@ const defaultRoutes = [
   {
     path: '/notes',
     route: noteRoute,
+  },
+  {
+    path: '/messages',
+    route: messageRoute,
   },
   {
     path: '/sample',

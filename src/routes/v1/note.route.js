@@ -18,11 +18,14 @@ router.post('/video', auth(), noteController.createVideoFileNote);
 router.post('/url', auth(), noteController.createUrlNote);
 router.post('/youtube', auth(), noteController.createYoutubeNote);
 router.post('/query', auth(), noteController.queryNote);
+router.post('/chat', auth(), noteController.chatNote);
 
 router
   .route('/:noteId')
   .get(auth(), validate(noteValidation.getNote), noteController.getNote)
   .patch(auth(), validate(noteValidation.updateNote), noteController.updateNote)
   .delete(auth(), validate(noteValidation.deleteNote), noteController.deleteNote);
+
+router.route('/:noteId/summarize').get(auth(), validate(noteValidation.getNote), noteController.summarize);
 
 module.exports = router;

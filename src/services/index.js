@@ -1,10 +1,13 @@
 module.exports.authService = require('./auth.service');
+module.exports.avatarService = require('./avatar.service');
 module.exports.dividerService = require('./divider.service');
 module.exports.emailService = require('./email.service');
+module.exports.messageService = require('./message.service');
 module.exports.noteService = require('./note.service');
 module.exports.openaiService = require('./openai.service');
 module.exports.pineconeService = require('./pinecone.service');
 module.exports.tokenService = require('./token.service');
+module.exports.uploadService = require('./upload.service');
 module.exports.userService = require('./user.service');
 module.exports.postService = require('./post.service');
 module.exports.subjectService = require('./subject.service');

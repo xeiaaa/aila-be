@@ -1,16 +1,15 @@
 const express = require('express');
 const auth = require('../../middlewares/auth');
-const uploadController = require('../../controllers/upload.controller');
+const { uploadController } = require('../../controllers');
+const uploadValidation = require('../../validations/upload.validation');
+const validate = require('../../middlewares/validate');
 
 const router = express.Router();
+router
+  .route('/')
+  .post(auth(), validate(uploadValidation.createUpload), uploadController.createUpload)
+  .get(auth(), uploadController.getUserUploads);
 
-// router.get('/', auth(), uploadController.getPresignedUrl);
-router.get('/', uploadController.getPresignedUrl);
+router.route('/s3-signed-url').get(auth(), uploadController.getSignedUrl);
 
 module.exports = router;
-
-/*
-  1 - CLIENT network request for presigned url
-  2 - SERVER get presigned url from AWS S3
-  3 - SERVER send back presigned url to CLIENT
-*/

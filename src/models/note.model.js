@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { noteTypes } = require('../config/notes');
 const { toJSON, paginate } = require('./plugins');
+const { status } = require('../config/status');
 
 const noteSchema = mongoose.Schema(
   {
@@ -30,6 +31,11 @@ const noteSchema = mongoose.Schema(
       required: false,
       default: false,
     },
+    status: {
+      type: String,
+      enum: status,
+      default: status.PROCESSING,
+    },
     type: {
       type: String,
       enum: [
@@ -48,6 +54,20 @@ const noteSchema = mongoose.Schema(
       type: Number,
       required: false,
       default: 0,
+    },
+    summary: {
+      type: String,
+      required: false,
+    },
+    questions: [
+      {
+        type: String,
+        required: false,
+      },
+    ],
+    tldr: {
+      type: String,
+      required: false,
     },
   },
   {

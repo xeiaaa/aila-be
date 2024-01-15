@@ -1,4 +1,5 @@
 module.exports.Divider = require('./divider.model');
+module.exports.Message = require('./message.model');
 module.exports.Note = require('./note.model');
 module.exports.Post = require('./post.model');
 module.exports.Subject = require('./subject.model');

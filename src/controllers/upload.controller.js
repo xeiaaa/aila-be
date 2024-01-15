@@ -1,5 +1,7 @@
+const httpStatus = require('http-status');
 const aws = require('aws-sdk');
 const catchAsync = require('../utils/catchAsync');
+const { uploadService } = require('../services');
 
 const bucketName = process.env.AWS_BUCKET;
 const s3Data = {
@@ -11,7 +13,7 @@ const s3Data = {
 
 const s3 = new aws.S3(s3Data);
 
-const getPresignedUrl = catchAsync(async (req, res) => {
+const getSignedUrl = catchAsync(async (req, res) => {
   const { fileName, fileType } = req.query;
 
   const extension = fileName.slice(fileName.lastIndexOf('.'));
@@ -38,6 +40,21 @@ const getPresignedUrl = catchAsync(async (req, res) => {
   });
 });
 
+const createUpload = catchAsync(async (req, res) => {
+  req.body.user = req.user._id;
+  const upload = await uploadService.createUpload(req.body);
+  res.status(httpStatus.CREATED).send(upload);
+});
+
+const getUserUploads = catchAsync(async (req, res) => {
+  const user = req.user._id;
+  const filter = { user };
+  const result = await uploadService.queryUploads(filter, { limit: 100 });
+  res.send(result);
+});
+
 module.exports = {
-  getPresignedUrl,
+  getSignedUrl,
+  createUpload,
+  getUserUploads,
 };

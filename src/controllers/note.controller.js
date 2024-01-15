@@ -1,5 +1,6 @@
 const PDFJS = require('pdfjs-dist/legacy/build/pdf');
 const httpStatus = require('http-status');
+const { OpenAI } = require('langchain');
 const { OpenAIEmbeddings } = require('langchain/embeddings/openai');
 const { PineconeStore } = require('langchain/vectorstores/pinecone');
 const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
@@ -8,14 +9,18 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const ytdl = require('ytdl-core');
+const { ConversationalRetrievalQAChain } = require('langchain/chains');
 
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { noteService, openaiService, pineconeService } = require('../services');
+const { noteService, openaiService, pineconeService, messageService } = require('../services');
 const queryParser = require('../utils/queryParser');
 const { Note } = require('../models');
 const { getEmbeddings, getCompletion } = require('../services/openai.service');
 const { noteTypes } = require('../config/notes');
+const embedText = require('./functions/embedText');
+const transcribe = require('./functions/transcribe');
+const { status } = require('../config/status');
 
 const createNote = catchAsync(async (req, res) => {
   req.body.user = req.user._id;
@@ -38,271 +43,167 @@ const createPDFNote = catchAsync(async (req, res) => {
   req.body.type = noteTypes.PDF;
   const note = await noteService.createNote(req.body);
 
-  // Process Pinecone
-  const vectors = [];
+  res.send(note);
+  const noteToUpdate = await noteService.getNoteById(note._id);
 
-  const myFiledata = await fetch(req.body.url);
+  try {
+    // Process Pinecone
+    const vectors = [];
 
-  if (myFiledata.ok) {
-    const pdfDoc = await PDFJS.getDocument(await myFiledata.arrayBuffer()).promise;
-    const { numPages } = pdfDoc;
-    for (let i = 0; i < numPages; i += 1) {
-      const page = await pdfDoc.getPage(i + 1);
-      const textContent = await page.getTextContent();
-      const text = textContent.items.map((item) => item.str).join('');
+    const myFiledata = await fetch(req.body.url);
 
-      // 5. Get embeddings for each page
-      const embedding = await openaiService.getEmbeddings(text);
+    let transcription = '';
 
-      // 6. push to vector array
-      const metadata = {
-        pageNum: i + 1,
-        text,
-        note: note._id,
-        subject: req.body.subject,
-        user: req.user._id,
-      };
-      console.log({ metadata, note });
-      vectors.push({
-        id: `page${i + 1}`,
-        values: embedding,
-        metadata,
+    if (myFiledata.ok) {
+      const pdfDoc = await PDFJS.getDocument(await myFiledata.arrayBuffer()).promise;
+      const { numPages } = pdfDoc;
+      for (let i = 0; i < numPages; i += 1) {
+        const page = await pdfDoc.getPage(i + 1);
+        const textContent = await page.getTextContent();
+        const text = textContent.items.map((item) => item.str).join('');
+        transcription += `\n${text}`;
+
+        // 5. Get embeddings for each page
+        const embedding = await openaiService.getEmbeddings(text);
+
+        // 6. push to vector array
+        const metadata = {
+          pageNum: i + 1,
+          text,
+          note: note._id,
+          subject: req.body.subject,
+          user: req.user._id,
+        };
+        console.log({ metadata, note });
+        vectors.push({
+          id: `page${i + 1}`,
+          values: embedding,
+          metadata,
+        });
+      }
+
+      // 7. initialize pinecone
+      await pineconeService.initialize(); // initialize pinecone
+
+      // 8. connect to the index
+      const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
+
+      // 9. upsert to pinecone index
+      await index.upsert({
+        upsertRequest: {
+          vectors,
+        },
       });
     }
 
-    // 7. initialize pinecone
-    await pineconeService.initialize(); // initialize pinecone
+    // Update newnote isProcessed
+    // note.isProcessed = true;
+    // await note.save();
 
-    // 8. connect to the index
-    const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
-
-    // 9. upsert to pinecone index
-    await index.upsert({
-      upsertRequest: {
-        vectors,
-      },
-    });
+    noteToUpdate.transcription = transcription;
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(transcription);
+    noteToUpdate.summary = summary;
+    await noteToUpdate.save();
+  } catch (error) {
+    noteToUpdate.status = status.FAILED;
+    await noteToUpdate.save();
   }
-
-  // Update newnote isProcessed
-  // note.isProcessed = true;
-  // await note.save();
-
-  res.send(note);
 });
 
 const createTextNote = catchAsync(async (req, res) => {
-  const { transcription } = req.body;
-
-  // Create new note
   req.body.user = req.user._id;
   req.body.type = noteTypes.TEXT;
   const note = await noteService.createNote(req.body);
 
-  await pineconeService.initialize();
-
-  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 2000,
-    chunkOverlap: 200,
-  });
-  let output = await splitter.createDocuments([transcription]);
-  // output[0].metadata.note = note._id.toString();
-  output = output.map((_item, index) => {
-    const item = { ..._item };
-    const metadata = {
-      pageNum: index + 1,
-      text: transcription,
-      note: note._id.toString(),
-      subject: req.body.subject,
-      user: req.user._id.toString(),
-    };
-    item.metadata = { ...item.metadata, ...metadata };
-    return item;
-  });
-
-  if (pineconeIndex) {
-    await PineconeStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-      }),
-      {
-        pineconeIndex,
-      }
-    );
-  }
-
+  await embedText(note);
   res.send(note);
+  const noteToUpdate = await noteService.getNoteById(note._id);
+  try {
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(noteToUpdate.transcription);
+    noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
+    noteToUpdate.tldr = tldr;
+
+    await noteToUpdate.save();
+  } catch (error) {
+    await noteToUpdate.save();
+  }
 });
 
 const createVideoFileNote = catchAsync(async (req, res) => {
   req.body.user = req.user._id;
   req.body.type = noteTypes.VIDEO;
-  const note = await noteService.createNote(req.body);
+  const _note = await noteService.createNote(req.body);
+  res.send(_note);
 
-  // Transcribe
-  const client = new AssemblyAI({
-    apiKey: process.env.ASSEMBLYAI_API_KEY,
-  });
-
-  const FILE_URL = req.body.url;
-
-  const data = {
-    audio_url: FILE_URL,
-  };
-  console.log(
-    'STARTING VIDEO FILE',
-    {
-      apiKey: process.env.ASSEMBLYAI_API_KEY,
-    },
-    note
-  );
-  console.log({ data });
-  const transcript = await client.transcripts.create(data);
-  console.log({ transcript });
-  const transcription = transcript.text;
-
-  await pineconeService.initialize();
-
-  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 2000,
-    chunkOverlap: 200,
-  });
-  let output = await splitter.createDocuments([transcription]);
-  // output[0].metadata.note = note._id.toString();
-  output = output.map((_item, index) => {
-    const item = { ..._item };
-    const metadata = {
-      pageNum: index + 1,
-      text: transcription,
-      note: note._id.toString(),
-      subject: req.body.subject,
-      user: req.user._id.toString(),
-    };
-    item.metadata = { ...item.metadata, ...metadata };
-    return item;
-  });
-
-  if (pineconeIndex) {
-    await PineconeStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-      }),
-      {
-        pineconeIndex,
-      }
-    );
+  const noteToUpdate = await noteService.getNoteById(_note._id);
+  try {
+    // Transcribe
+    const transcription = await transcribe(req.body.url);
+    noteToUpdate.transcription = transcription;
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(transcription);
+    noteToUpdate.summary = summary;
+    const note = await noteToUpdate.save();
+    await embedText(note);
+  } catch (error) {
+    noteToUpdate.status = status.FAILED;
+    await noteToUpdate.save();
   }
-
-  res.send(note);
 });
 
 const createAudioFileNote = catchAsync(async (req, res) => {
   req.body.user = req.user._id;
   req.body.type = noteTypes.AUDIO;
-  const note = await noteService.createNote(req.body);
+  const _note = await noteService.createNote(req.body);
+  res.send(_note);
 
   // Transcribe
-  const client = new AssemblyAI({
-    apiKey: process.env.ASSEMBLYAI_API_KEY,
-  });
-
-  const FILE_URL = req.body.url;
-
-  const data = {
-    audio_url: FILE_URL,
-  };
-
-  const transcript = await client.transcripts.create(data);
-  const transcription = transcript.text;
-
-  await pineconeService.initialize();
-
-  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 2000,
-    chunkOverlap: 200,
-  });
-  let output = await splitter.createDocuments([transcription]);
-  // output[0].metadata.note = note._id.toString();
-  output = output.map((_item, index) => {
-    const item = { ..._item };
-    const metadata = {
-      pageNum: index + 1,
-      text: transcription,
-      note: note._id.toString(),
-      subject: req.body.subject,
-      user: req.user._id.toString(),
-    };
-    item.metadata = { ...item.metadata, ...metadata };
-    return item;
-  });
-
-  if (pineconeIndex) {
-    await PineconeStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-      }),
-      {
-        pineconeIndex,
-      }
-    );
+  const noteToUpdate = await noteService.getNoteById(_note._id);
+  try {
+    const transcription = await transcribe(req.body.url);
+    noteToUpdate.transcription = transcription;
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(transcription);
+    noteToUpdate.summary = summary;
+    const note = await noteToUpdate.save();
+    await embedText(note);
+  } catch (error) {
+    noteToUpdate.status = status.FAILED;
+    await noteToUpdate.save();
   }
-
-  res.send(note);
 });
 
 const createUrlNote = catchAsync(async (req, res) => {
-  const { url } = req.body;
-
-  const { data } = await axios.get(url);
-
-  const $ = cheerio.load(data);
-  const transcription = $('body').text();
-
   // Create new note
   req.body.user = req.user._id;
   req.body.type = noteTypes.URL;
-  const note = await noteService.createNote(req.body);
-  await pineconeService.initialize();
+  const _note = await noteService.createNote(req.body);
+  res.send(_note);
+  const noteToUpdate = await noteService.getNoteById(_note._id);
 
-  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 2000,
-    chunkOverlap: 200,
-  });
-  let output = await splitter.createDocuments([transcription]);
-  // output[0].metadata.note = note._id.toString();
-  output = output.map((_item, index) => {
-    const item = { ..._item };
-    const metadata = {
-      pageNum: index + 1,
-      text: transcription,
-      note: note._id.toString(),
-      subject: req.body.subject,
-      user: req.user._id.toString(),
-    };
-    item.metadata = { ...item.metadata, ...metadata };
-    return item;
-  });
+  try {
+    // Scrape text from URL
+    const { data } = await axios.get(req.body.url);
+    const $ = cheerio.load(data);
+    const transcription = $('body').text();
+    noteToUpdate.transcription = transcription;
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(transcription);
+    noteToUpdate.summary = summary;
+    const note = await noteToUpdate.save();
 
-  if (pineconeIndex) {
-    await PineconeStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-      }),
-      {
-        pineconeIndex,
-      }
-    );
+    await embedText(note);
+  } catch (error) {
+    noteToUpdate.status = status.FAILED;
+    await noteToUpdate.save();
   }
-
-  res.send(note);
 });
 
 const queryNote = catchAsync(async (req, res) => {
@@ -324,6 +225,7 @@ const queryNote = catchAsync(async (req, res) => {
 
   const result = await index.query({ queryRequest });
 
+  console.info({ result });
   // 8. get the metadata from the results
   let contexts = result.matches.map((item) => item.metadata.text);
 
@@ -352,76 +254,88 @@ const queryNote = catchAsync(async (req, res) => {
   res.status(200).json({ response });
 });
 
+const chatNote = catchAsync(async (req, res) => {
+  const { question, chatHistory = [], id: noteId } = req.body;
+
+  // Create a message of user
+  const messagePayload = {
+    user: req.user._id,
+    message: question,
+    note: noteId,
+  };
+  const senderMessage = await messageService.createMessage(messagePayload);
+
+  await pineconeService.initialize();
+  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
+
+  const metadataFilter = { note: { $eq: noteId } };
+
+  const vectorStore = await PineconeStore.fromExistingIndex(
+    new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    }),
+    { pineconeIndex, filter: metadataFilter }
+  );
+
+  /* Use as part of a chain (currently no metadata filters) */
+  const model = new OpenAI({ modelName: 'gpt-3.5-turbo' });
+
+  const chain = ConversationalRetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
+
+  const query = await chain.call({ question, chat_history: chatHistory });
+  // Create a message of ai
+  const aiMessagePayload = {
+    user: req.user._id,
+    message: query.text,
+    note: noteId,
+    isAi: true,
+  };
+
+  const message = await messageService.createMessage(aiMessagePayload);
+  return res.status(200).json([senderMessage, message]);
+});
+
 const createYoutubeNote = catchAsync(async (req, res) => {
   const { url } = req.body;
 
-  // ytdl(url).pipe(fs.createWriteStream('video.mp4'));
-
   const youtubeInfo = await ytdl.getInfo(url);
-
   const formats = Array.isArray(youtubeInfo.formats) ? youtubeInfo.formats : [];
+  let audioFile = formats.find((format) => (format.mimeType || '').includes('audio/mp4'));
+  if (!audioFile) {
+    audioFile = formats.find((format) => (format.mimeType || '').includes('video/mp4'));
+  }
 
-  const audioFile = formats.find((format) => (format.mimeType || '').includes('audio/mp4'));
+  if (!audioFile) {
+    return res.send(400).message('');
+  }
 
   req.body.user = req.user._id;
   req.body.type = noteTypes.YOUTUBE;
-  const note = await noteService.createNote(req.body);
+  const _note = await noteService.createNote(req.body);
+  res.send(_note);
+  const noteToUpdate = await noteService.getNoteById(_note._id);
 
-  // Transcribe
-  const client = new AssemblyAI({
-    apiKey: process.env.ASSEMBLYAI_API_KEY,
-  });
+  try {
+    // Transcribe
+    console.log('Transcribing', audioFile.url);
+    const transcription = await transcribe(audioFile.url);
+    console.log('transcribed', transcription);
+    noteToUpdate.transcription = transcription;
+    noteToUpdate.status = status.SUCCESS;
+    const summary = await noteService.generateNoteSummary(transcription);
+    noteToUpdate.summary = summary;
+    const note = await noteToUpdate.save();
 
-  const FILE_URL = audioFile.url;
-
-  const data = {
-    audio_url: FILE_URL,
-  };
-
-  const transcript = await client.transcripts.create(data);
-  const transcription = transcript.text;
-
-  await pineconeService.initialize();
-
-  const pineconeIndex = pineconeService.pinecone.Index(process.env.PDB_INDEX || '');
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 2000,
-    chunkOverlap: 200,
-  });
-  let output = await splitter.createDocuments([transcription]);
-  // output[0].metadata.note = note._id.toString();
-  output = output.map((_item, index) => {
-    const item = { ..._item };
-    const metadata = {
-      pageNum: index + 1,
-      text: transcription,
-      note: note._id.toString(),
-      subject: req.body.subject,
-      user: req.user._id.toString(),
-    };
-    item.metadata = { ...item.metadata, ...metadata };
-    return item;
-  });
-
-  if (pineconeIndex) {
-    await PineconeStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-      }),
-      {
-        pineconeIndex,
-      }
-    );
+    await embedText(note);
+  } catch (error) {
+    noteToUpdate.status = status.FAILED;
+    await noteToUpdate.save();
   }
-
-  res.send(note);
-
-  res.send('ok');
 });
 
 const getNotes = catchAsync(async (req, res) => {
   const { filter, options } = queryParser(req.query);
+  filter.user = req.user._id.toString();
   const result = await noteService.queryNotes(filter, options);
   res.send(result);
 });
@@ -439,8 +353,38 @@ const updateNote = catchAsync(async (req, res) => {
   if (noteToEdit.user.toString() !== req.user._id.toString()) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
   }
+
+  // // 7. initialize pinecone
+  // await pineconeService.initialize(); // initialize pinecone
+
+  // // 8. connect to the index
+  // const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
+
+  // const embeddings = new OpenAIEmbeddings({
+  //   openAIApiKey: process.env.OPENAI_API_KEY,
+  // });
+  // const embeddedQuery = await embeddings.embedQuery('');
+
+  // const queryRequest = {
+  //   topK: 1,
+  //   vector: embeddedQuery,
+  //   includeMetadata: true,
+  //   includeValues: true,
+  //   filter: {
+  //     note: req.params.noteId,
+  //   },
+  // };
+
+  // const queryResponse = await index.query({ queryRequest });
+  // if (!queryResponse.matches[0]) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
+  // }
+
+  // console.info(queryResponse.matches[0].id, queryResponse.matches[0]);
+  // await index.delete(queryResponse.matches[0].id);
   const note = await noteService.updateNoteById(req.params.noteId, req.body);
   res.send(note);
+  // await embedText(note);
 });
 
 const deleteNote = catchAsync(async (req, res) => {
@@ -450,6 +394,23 @@ const deleteNote = catchAsync(async (req, res) => {
   }
   await noteService.deleteNoteById(req.params.noteId);
   res.status(httpStatus.NO_CONTENT).send();
+});
+
+const summarize = catchAsync(async (req, res) => {
+  const note = await noteService.getNoteById(req.params.noteId);
+  if (!note) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
+  }
+
+  if (!note.transcription) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Note not processed yet');
+  }
+
+  const response = await noteService.generateNoteSummary(note.transcription);
+  note.summary = response;
+  await note.save();
+
+  res.status(200).json({ response });
 });
 
 module.exports = {
@@ -465,4 +426,6 @@ module.exports = {
   getNote,
   updateNote,
   deleteNote,
+  chatNote,
+  summarize,
 };

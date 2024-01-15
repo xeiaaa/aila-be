@@ -7,7 +7,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 const OPEN_AI_EMBEDDING_MODEL = 'text-embedding-ada-002';
-const OPEN_AI_COMPLETION_MODEL = 'text-davinci-003';
+const OPEN_AI_COMPLETION_MODEL = 'gpt-3.5-turbo-instruct';
 
 const getEmbeddings = async (text) => {
   const response = await openai.createEmbedding({
