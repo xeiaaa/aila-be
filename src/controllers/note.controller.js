@@ -104,6 +104,13 @@ const createPDFNote = catchAsync(async (req, res) => {
     noteToUpdate.status = status.SUCCESS;
     const summary = await noteService.generateNoteSummary(transcription);
     noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(transcription);
+    noteToUpdate.tldr = tldr;
+
     await noteToUpdate.save();
   } catch (error) {
     noteToUpdate.status = status.FAILED;
@@ -150,6 +157,12 @@ const createVideoFileNote = catchAsync(async (req, res) => {
     noteToUpdate.status = status.SUCCESS;
     const summary = await noteService.generateNoteSummary(transcription);
     noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
+    noteToUpdate.tldr = tldr;
     const note = await noteToUpdate.save();
     await embedText(note);
   } catch (error) {
@@ -172,6 +185,12 @@ const createAudioFileNote = catchAsync(async (req, res) => {
     noteToUpdate.status = status.SUCCESS;
     const summary = await noteService.generateNoteSummary(transcription);
     noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
+    noteToUpdate.tldr = tldr;
     const note = await noteToUpdate.save();
     await embedText(note);
   } catch (error) {
@@ -197,6 +216,12 @@ const createUrlNote = catchAsync(async (req, res) => {
     noteToUpdate.status = status.SUCCESS;
     const summary = await noteService.generateNoteSummary(transcription);
     noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
+    noteToUpdate.tldr = tldr;
     const note = await noteToUpdate.save();
 
     await embedText(note);
@@ -324,6 +349,12 @@ const createYoutubeNote = catchAsync(async (req, res) => {
     noteToUpdate.status = status.SUCCESS;
     const summary = await noteService.generateNoteSummary(transcription);
     noteToUpdate.summary = summary;
+
+    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
+    noteToUpdate.questions = questions;
+
+    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
+    noteToUpdate.tldr = tldr;
     const note = await noteToUpdate.save();
 
     await embedText(note);
