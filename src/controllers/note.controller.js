@@ -148,27 +148,6 @@ const createVideoFileNote = catchAsync(async (req, res) => {
   req.body.type = noteTypes.VIDEO;
   const _note = await noteService.createNote(req.body);
   res.send(_note);
-
-  const noteToUpdate = await noteService.getNoteById(_note._id);
-  try {
-    // Transcribe
-    const transcription = await transcribe(req.body.url);
-    noteToUpdate.transcription = transcription;
-    noteToUpdate.status = status.SUCCESS;
-    const summary = await noteService.generateNoteSummary(transcription);
-    noteToUpdate.summary = summary;
-
-    const questions = await noteService.generateQuestions(noteToUpdate.transcription);
-    noteToUpdate.questions = questions;
-
-    const tldr = await noteService.generateTLDR(noteToUpdate.transcription);
-    noteToUpdate.tldr = tldr;
-    const note = await noteToUpdate.save();
-    await embedText(note);
-  } catch (error) {
-    noteToUpdate.status = status.FAILED;
-    await noteToUpdate.save();
-  }
 });
 
 const createAudioFileNote = catchAsync(async (req, res) => {
@@ -385,37 +364,49 @@ const updateNote = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
   }
 
-  // // 7. initialize pinecone
-  // await pineconeService.initialize(); // initialize pinecone
+  // 7. initialize pinecone
+  await pineconeService.initialize(); // initialize pinecone
 
-  // // 8. connect to the index
-  // const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
+  // 8. connect to the index
+  const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
+  const embedding = await openaiService.getEmbeddings(req.body.transcription);
 
-  // const embeddings = new OpenAIEmbeddings({
-  //   openAIApiKey: process.env.OPENAI_API_KEY,
-  // });
-  // const embeddedQuery = await embeddings.embedQuery('');
+  const embeddings = new OpenAIEmbeddings({
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+  const embeddedQuery = await embeddings.embedQuery('');
 
-  // const queryRequest = {
-  //   topK: 1,
-  //   vector: embeddedQuery,
-  //   includeMetadata: true,
-  //   includeValues: true,
-  //   filter: {
-  //     note: req.params.noteId,
-  //   },
-  // };
+  const queryRequest = {
+    topK: 1,
+    vector: embeddedQuery,
+    includeMetadata: true,
+    includeValues: true,
+    filter: {
+      note: req.params.noteId,
+    },
+  };
 
-  // const queryResponse = await index.query({ queryRequest });
-  // if (!queryResponse.matches[0]) {
-  //   throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
-  // }
+  const queryResponse = await index.query({ queryRequest });
+  if (!queryResponse.matches[0]) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
+  }
+  const metadata = {
+    text: req.body.transcription,
+    note: req.params.noteId,
+    subject: req.body.subject,
+    user: req.user._id,
+  };
 
-  // console.info(queryResponse.matches[0].id, queryResponse.matches[0]);
-  // await index.delete(queryResponse.matches[0].id);
+  await index.update({
+    updateRequest: {
+      id: queryResponse.matches[0].id,
+      values: embedding,
+      setMetadata: metadata,
+    },
+  });
+
   const note = await noteService.updateNoteById(req.params.noteId, req.body);
   res.send(note);
-  // await embedText(note);
 });
 
 const deleteNote = catchAsync(async (req, res) => {

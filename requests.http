@@ -147,3 +147,9 @@ GET http://localhost:3000/v1/messages?limit=200
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTkzNjJkMjM0MTUyYzc3YTg0YTUwZGEiLCJpYXQiOjE3MDQ5NTI1NDgsImV4cCI6MTcwNjc1MjU0OCwidHlwZSI6ImFjY2VzcyJ9.pGHrWUymLB2-qRW-iW5Xx1NN6E9FnlaCtqzZReiHw8g
 
+
+### Get video status
+GET http://localhost:3000/v1/heygens/bc523ba29e9d465b9e24d6b5493505bb/status
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTkzNjJkMjM0MTUyYzc3YTg0YTUwZGEiLCJpYXQiOjE3MDY1OTY4NDYsImV4cCI6MTcwODM5Njg0NiwidHlwZSI6ImFjY2VzcyJ9.a0ytU9P19AIIDJOBDLKyZ-ArFaQzHAEsaGZeaIBDBtY
+

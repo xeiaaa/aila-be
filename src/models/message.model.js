@@ -32,8 +32,8 @@ messageSchema.plugin(toJSON);
 messageSchema.plugin(paginate);
 
 /**
- * @typedef Media
+ * @typedef Message
  */
-const Media = mongoose.model('Media', messageSchema);
+const Message = mongoose.model('Message', messageSchema);
 
-module.exports = Media;
+module.exports = Message;

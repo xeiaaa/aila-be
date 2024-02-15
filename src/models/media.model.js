@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
+
 const { toJSON, paginate } = require('./plugins');
+const { mediaType } = require('../config/mediaType');
 
 const mediaSchema = mongoose.Schema(
   {
@@ -12,17 +14,21 @@ const mediaSchema = mongoose.Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Subject',
     },
-    media: {
+    note: {
       type: mongoose.SchemaTypes.ObjectId,
-      ref: 'Media',
+      ref: 'Note',
     },
     type: {
       type: String,
-      // enum: ['audio', 'video', 'pdf'],
+      enum: mediaType,
       required: true,
     },
     metaData: {
       type: Object,
+    },
+    url: {
+      type: String,
+      required: false,
     },
   },
   {

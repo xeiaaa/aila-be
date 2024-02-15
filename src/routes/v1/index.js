@@ -10,6 +10,10 @@ const dividerRoute = require('./divider.route');
 const subjectRoute = require('./subject.route');
 const noteRoute = require('./note.route');
 const messageRoute = require('./message.route');
+const mediaRoute = require('./media.route');
+const talkingPhotoRoute = require('./talkingPhoto.route');
+const heygenRoute = require('./heygen.route');
+
 const config = require('../../config/config');
 
 const router = express.Router();
@@ -50,6 +54,18 @@ const defaultRoutes = [
   {
     path: '/messages',
     route: messageRoute,
+  },
+  {
+    path: '/talkingPhotos',
+    route: talkingPhotoRoute,
+  },
+  {
+    path: '/medias',
+    route: mediaRoute,
+  },
+  {
+    path: '/heygens',
+    route: heygenRoute,
   },
   {
     path: '/sample',

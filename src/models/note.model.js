@@ -3,6 +3,18 @@ const { noteTypes } = require('../config/notes');
 const { toJSON, paginate } = require('./plugins');
 const { status } = require('../config/status');
 
+const mediaSchema = mongoose.Schema({
+  audio: {
+    type: Object,
+  },
+  pdf: {
+    type: Object,
+  },
+  video: {
+    type: Object,
+  },
+});
+
 const noteSchema = mongoose.Schema(
   {
     user: {
@@ -68,6 +80,9 @@ const noteSchema = mongoose.Schema(
     tldr: {
       type: String,
       required: false,
+    },
+    media: {
+      type: Object,
     },
   },
   {
