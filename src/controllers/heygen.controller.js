@@ -28,7 +28,7 @@ const generateHeyGenVideo = catchAsync(async (req, res) => {
       test: true,
       aspect_ratio: '16:9',
     };
-    const response = await axios.post(process.env.GENERATE_VIDEO_URL, requestData, {
+    const response = await axios.post('https://api.heygen.com/v2/video/generate', requestData, {
       headers: {
         'X-Api-Key': process.env.HEYGEN_API_KEY,
         'Content-Type': 'application/json',
@@ -37,6 +37,7 @@ const generateHeyGenVideo = catchAsync(async (req, res) => {
 
     res.status(httpStatus.CREATED).send(response.data);
   } catch (error) {
+    console.log('HEYGEN GENERATE ERROR');
     console.info({ error });
     return res.status(400).send('Unprocessed file', error);
   }
