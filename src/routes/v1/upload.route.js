@@ -10,6 +10,6 @@ router
   .post(auth(), validate(uploadValidation.createUpload), uploadController.createUpload)
   .get(auth(), uploadController.getUserUploads);
 
-router.route('/s3-signed-url').get(auth(), uploadController.getSignedUrl);
+router.route('/s3-signed-url').get(uploadController.getSignedUrl);
 
 module.exports = router;
