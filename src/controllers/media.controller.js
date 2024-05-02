@@ -1,5 +1,4 @@
 const httpStatus = require('http-status');
-const axios = require('axios');
 
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
@@ -20,7 +19,7 @@ const createMedia = catchAsync(async (req, res) => {
   const media = await mediaService.createMedia(req.body);
   note.media = {
     ...note.media,
-    video: {
+    [req.body.type]: {
       media: media._id,
     },
   };

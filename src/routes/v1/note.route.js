@@ -24,8 +24,10 @@ router
   .route('/:noteId')
   .get(auth(), validate(noteValidation.getNote), noteController.getNote)
   .patch(auth(), validate(noteValidation.updateNote), noteController.updateNote)
-  .delete(auth(), validate(noteValidation.deleteNote), noteController.deleteNote);
+  .delete(auth(), validate(noteValidation.deleteNote), noteController.deleteNote)
+  .post(auth(), validate(noteValidation.deleteNote), noteController.archivedNote);
 
 router.route('/:noteId/summarize').get(auth(), validate(noteValidation.getNote), noteController.summarize);
+router.route('/:noteId/retrieve').post(auth(), validate(noteValidation.deleteNote), noteController.retrievedNote);
 
 module.exports = router;

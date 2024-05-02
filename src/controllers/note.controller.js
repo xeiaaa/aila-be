@@ -360,52 +360,41 @@ const getNote = catchAsync(async (req, res) => {
 
 const updateNote = catchAsync(async (req, res) => {
   const noteToEdit = await noteService.getNoteById(req.params.noteId);
+
   if (noteToEdit.user.toString() !== req.user._id.toString()) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
   }
-
-  // 7. initialize pinecone
-  await pineconeService.initialize(); // initialize pinecone
-
-  // 8. connect to the index
-  const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
-  const embedding = await openaiService.getEmbeddings(req.body.transcription);
-
-  const embeddings = new OpenAIEmbeddings({
-    openAIApiKey: process.env.OPENAI_API_KEY,
-  });
-  const embeddedQuery = await embeddings.embedQuery('');
-
-  const queryRequest = {
-    topK: 1,
-    vector: embeddedQuery,
-    includeMetadata: true,
-    includeValues: true,
-    filter: {
-      note: req.params.noteId,
-    },
-  };
-
-  const queryResponse = await index.query({ queryRequest });
-  if (!queryResponse.matches[0]) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
-  }
-  const metadata = {
-    text: req.body.transcription,
-    note: req.params.noteId,
-    subject: req.body.subject,
-    user: req.user._id,
-  };
-
-  await index.update({
-    updateRequest: {
-      id: queryResponse.matches[0].id,
-      values: embedding,
-      setMetadata: metadata,
-    },
-  });
-
   const note = await noteService.updateNoteById(req.params.noteId, req.body);
+  if (req.body.transcription) {
+    await pineconeService.initialize();
+    const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
+    const embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    });
+    const embeddedQuery = await embeddings.embedQuery('');
+
+    const queryRequest = {
+      topK: 1,
+      vector: embeddedQuery,
+      includeMetadata: true,
+      includeValues: true,
+      filter: {
+        note: req.params.noteId,
+      },
+    };
+
+    const queryResponse = await index.query({ queryRequest });
+    if (queryResponse.matches.length === 0) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Note not found');
+    }
+    await index._delete({
+      deleteRequest: {
+        ids: queryResponse.matches.map((id) => id.toString()),
+      },
+    });
+    await embedText(note);
+  }
+
   res.send(note);
 });
 
@@ -415,6 +404,26 @@ const deleteNote = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
   }
   await noteService.deleteNoteById(req.params.noteId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+const archivedNote = catchAsync(async (req, res) => {
+  const note = await noteService.getNoteById(req.params.noteId);
+  if (note.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
+  }
+  note.isArchived = true;
+  await note.save();
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+const retrievedNote = catchAsync(async (req, res) => {
+  const note = await noteService.getNoteById(req.params.noteId);
+  if (note.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
+  }
+  note.isArchived = false;
+  await note.save();
   res.status(httpStatus.NO_CONTENT).send();
 });
 
@@ -450,4 +459,6 @@ module.exports = {
   deleteNote,
   chatNote,
   summarize,
+  archivedNote,
+  retrievedNote,
 };
