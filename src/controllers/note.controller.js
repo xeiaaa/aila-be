@@ -282,11 +282,18 @@ const chatNote = catchAsync(async (req, res) => {
   );
 
   /* Use as part of a chain (currently no metadata filters) */
-  const model = new OpenAI({ modelName: 'gpt-3.5-turbo' });
+  const model = new OpenAI({ modelName: 'gpt-3.5-turbo', temperature: 0.6 });
 
   const chain = ConversationalRetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
 
-  const query = await chain.call({ question, chat_history: chatHistory });
+  const query = await chain.call({
+    question: `
+    Strictly answer from the context.
+    question:
+      ${question}
+    `,
+    chat_history: chatHistory,
+  });
   // Create a message of ai
   const aiMessagePayload = {
     user: req.user._id,
@@ -365,7 +372,10 @@ const updateNote = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Unauthorized');
   }
   const note = await noteService.updateNoteById(req.params.noteId, req.body);
+
+  console.info({ note });
   if (req.body.transcription) {
+    console.info(req.body.transcription);
     await pineconeService.initialize();
     const index = pineconeService.pinecone.Index(process.env.PDB_INDEX);
     const embeddings = new OpenAIEmbeddings({
