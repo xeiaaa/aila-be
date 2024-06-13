@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { authService, userService, tokenService, emailService } = require('../services');
+const { authService, userService, tokenService, emailService, noteService } = require('../services');
 
 const register = catchAsync(async (req, res) => {
   console.log('Auth Controller / register', req.body);
@@ -51,7 +51,8 @@ const verifyEmail = catchAsync(async (req, res) => {
 });
 
 const me = catchAsync(async (req, res) => {
-  res.send(req.user);
+  const dataSize = await noteService.getUserNoteSize(req.user._id);
+  res.send({ user: req.user, memorySize: dataSize });
 });
 
 module.exports = {

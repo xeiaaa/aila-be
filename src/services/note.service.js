@@ -120,6 +120,54 @@ const generateTLDR = async (transcription) => {
   return tldr;
 };
 
+const getUserNoteSize = async (userId) => {
+  try {
+    const userNotes = await Note.find({ user: userId });
+    let totalSize = 0; // Use let instead of const
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const doc of userNotes) {
+      const docObject = doc.toObject(); // Convert Mongoose document to plain object
+      // eslint-disable-next-line no-restricted-syntax
+      for (const key in docObject) {
+        // eslint-disable-next-line no-prototype-builtins
+        if (docObject.hasOwnProperty(key)) {
+          const value = docObject[key];
+          let fieldSize;
+
+          if (typeof value === 'string') {
+            fieldSize = Buffer.byteLength(value, 'utf8');
+          } else if (Buffer.isBuffer(value)) {
+            fieldSize = value.length;
+          } else if (typeof value === 'object' && value !== null) {
+            fieldSize = Buffer.byteLength(JSON.stringify(value), 'utf8');
+          } else {
+            fieldSize = Buffer.byteLength(String(value), 'utf8');
+          }
+
+          totalSize += fieldSize;
+        }
+      }
+    }
+    const totalSizeInKB = (totalSize / 1024).toFixed(2);
+    const totalSizeInMB = (totalSizeInKB / 1024).toFixed(2);
+    const totalSizeInGB = (totalSizeInMB / 1024).toFixed(2);
+
+    let size;
+    if (parseInt(totalSizeInGB, 10) !== 0) {
+      size = `${totalSizeInGB} GB`;
+    } else if (parseInt(totalSizeInMB, 10) !== 0) {
+      size = `${totalSizeInMB} MB`;
+    } else {
+      size = `${totalSizeInKB} KB`;
+    }
+
+    return size;
+  } catch (error) {
+    console.error('Error calculating user note size:', error);
+  }
+};
+
 module.exports = {
   createNote,
   queryNotes,
@@ -129,4 +177,5 @@ module.exports = {
   generateNoteSummary,
   generateQuestions,
   generateTLDR,
+  getUserNoteSize,
 };
